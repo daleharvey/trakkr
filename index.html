@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Trakkr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="style/trakkr.css">
+  </head>
+
+  <body>
+
+    <header>
+      <h1><a data-href="">Trakkr</a></h1>
+      <navigation>
+        <ul>
+          <li><a id="activities" data-href="runs/">Activities</a></li>
+        </ul>
+      </navigation>
+    </header>
+
+    <div id="content">
+
+      <section class="page" id="page-home">
+        <h1 id="timer">00:00:00</h1>
+        <button id="start" disabled>Start</button>
+        <button id="stop" disabled>Stop</button>
+      </section>
+
+      <section class="page" id="page-runs">
+        <div id="runs"></div>
+      </section>
+
+      <section class="page" id="page-run">
+        <pre id="run"></pre>
+      </section>
+
+    </div>
+
+    <script src="js/deps/pouch.alpha.min.js"></script>
+    <script src="js/deps/date.format.js"></script>
+    <script src="js/trakkr.js"></script>
+  </body>
+</html>
