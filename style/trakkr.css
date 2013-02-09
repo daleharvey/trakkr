@@ -1,4 +1,4 @@
-* { margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: "Helvetica", Arial,sans-serif;
@@ -47,6 +47,13 @@ header {
   overflow: auto;
 }
 
+#map { height: 180px; width: 100%; }
+
+.grp { width: 33%; text-align: center; border-right: 1px solid #999; float: left; } 
+.grp:last-child { border-right: 0px; }
+#stats { border-bottom: 1px solid #999; overflow: auto; margin-bottom: 20px; }
+.grp h3 { margin: 5px; font-size: 14px; text-transform: uppercase; color: #666}
+
 header h1 {
   float:left;
   margin: 0;
@@ -86,7 +93,7 @@ navigation li a {
   background-image: url(img/list.svg);
 }
 
-#page-run, #page-home { padding: 10px; }
+#page-home { padding: 10px; }
 #page-home h1 { margin-bottom: 20px; margin-top: 10px; }
 
 header {
@@ -108,3 +115,21 @@ header {
 }
 
 .empty { text-align: center; margin: 40px; font-size: 40px; }
+
+/* Start Activity Page */
+
+#gps #found, #gps.active #not-found { 
+  display: none;
+}
+
+#gps.active #found {
+  display: block;
+}
+
+#start { 
+  background: orange;
+}
+
+#start.gpsActive { 
+  background: green;
+}

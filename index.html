@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <title>Trakkr</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" 
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.css" />
     <link rel="stylesheet" href="style/trakkr.css">
   </head>
 
@@ -21,9 +23,17 @@
     <div id="content">
 
       <section class="page" id="page-home">
+        <button id="start">Start</button>
+        <div id="gps">
+          <span id="not-found">Searching for GPS, if you start your run we will 
+            start recording when we find it.</span>
+          <span id="found">GPS is found</span>
+        </div>
+      </section>
+
+      <section class="page" id="page-activity">
         <h1 id="timer">00:00:00</h1>
-        <button id="start" disabled>Start</button>
-        <button id="stop" disabled>Stop</button>
+        <button id="stop">Stop</button>
       </section>
 
       <section class="page" id="page-runs">
@@ -31,12 +41,33 @@
       </section>
 
       <section class="page" id="page-run">
-        <pre id="run"></pre>
+        <div id="stats">
+          <div class="grp">
+            <h3>Distance</h3>
+            <span id="run-distance"></span>
+          </div>
+          <div class="grp">
+            <h3>Time</h3>
+            <span id="run-time"></span>
+          </div>
+          <div class="grp">
+            <h3>Pace</h3>
+            <span id="run-pace"></span>
+          </div>
+        </div>
+
+        <div id="map"></div>
+        <pre id="run"></pre><br />
+        <button id="delete-run">Delete Run</button>
       </section>
 
     </div>
 
-    <script src="js/deps/pouch.alpha.min.js"></script>
+    <script src="js/test_data.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
+    <script src="js/deps/underscore-min.js"></script>
+    <script src="js/deps/backbone-min.js"></script>
+    <script src="js/deps/pouchdb-nightly.min.js"></script>
     <script src="js/deps/date.format.js"></script>
     <script src="js/trakkr.js"></script>
   </body>
