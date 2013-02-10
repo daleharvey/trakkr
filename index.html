@@ -12,10 +12,10 @@
   <body>
 
     <header>
-      <h1><a data-href="">Trakkr</a></h1>
+      <h1><a href="/">Trakkr</a></h1>
       <navigation>
         <ul>
-          <li><a id="activities" data-href="runs/">Activities</a></li>
+          <li><a id="activities" href="/activities/">Activities</a></li>
         </ul>
       </navigation>
     </header>
@@ -31,16 +31,16 @@
         </div>
       </section>
 
-      <section class="page" id="page-activity">
+      <section class="page" id="page-record-activity">
         <h1 id="timer">00:00:00</h1>
         <button id="stop">Stop</button>
       </section>
 
-      <section class="page" id="page-runs">
+      <section class="page" id="page-activities">
         <div id="runs"></div>
       </section>
 
-      <section class="page" id="page-run">
+      <section class="page" id="page-activity">
         <div id="stats">
           <div class="grp">
             <h3>Distance</h3>
@@ -64,11 +64,15 @@
     </div>
 
     <script src="js/test_data.js"></script>
+
+    <script src="https://login.persona.org/include.js"></script>
     <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
     <script src="js/deps/underscore-min.js"></script>
     <script src="js/deps/backbone-min.js"></script>
     <script src="js/deps/pouchdb-nightly.min.js"></script>
     <script src="js/deps/date.format.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/trakkr.utils.js"></script>
     <script src="js/trakkr.js"></script>
   </body>
 </html>

@@ -2,61 +2,19 @@
 
 "use strict";
 
-var DB_NAME = 'trakkr';
-var RUN_TEST = true;
-
-
-function toRad(num) { 
-  return num * Math.PI / 180;
-}
-
-// http://www.movable-type.co.uk/scripts/latlong.html
-function distanceBetweenPoints(p1, p2) {
-  var R = 6371; // km
-  var dLat = toRad(p2.latitude - p1.latitude);
-  var dLon = toRad(p2.longitude - p1.longitude);
-  var lat1 = toRad(p1.latitude);
-  var lat2 = toRad(p2.latitude);
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.sin(dLon/2) * Math.sin(dLon/2) * 
-    Math.cos(p1.latitude) * Math.cos(p2.latitude); 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  return R * c;
-}
-
-function totalDistance(points) { 
-  var distance = 0;
-  var bounds = null;
-  for (var i = 0; i < points.length - 1; i++) { 
-    distance += distanceBetweenPoints(points[i].coords, points[i+1].coords);
-    if (!bounds) { 
-      bounds = [[points[i].coords.latitude, points[i].coords.longitude],
-                [points[i+1].coords.latitude, points[i+1].coords.longitude]]
-    } else { 
-      bounds[0][0] = Math.min(bounds[0][0], points[i].coords.latitude);      
-      bounds[0][1] = Math.min(bounds[0][1], points[i].coords.longitude);
-      bounds[1][0] = Math.max(bounds[1][0], points[i].coords.latitude);      
-      bounds[1][1] = Math.max(bounds[1][1], points[i].coords.longitude);
-    }
-  }
-  return {
-    distance: distance,
-    bounds: bounds
-  };
-}
-
 var Trakkr = function(callback) {
 
-  var api = {};
-  var db;
+  var DB_NAME = 'trakkr';
 
-  var lastPoint;
+  var api = {};
+  _.extend(api, Backbone.Events);
+
+  var db = Pouch(DB_NAME, function(err, pouch) {
+    callback(err);
+  });
+  
   var currentRun; 
   var gpsStatus = false;
-
-  var testInterval;
-
-  _.extend(api, Backbone.Events);
 
   var watchId = navigator.geolocation
     .watchPosition(positionReceived, positionError);
@@ -78,28 +36,26 @@ var Trakkr = function(callback) {
   
   function positionReceived(position) {
     updateGpsStatus(true);
-    lastPoint = {
-      timestamp: position.timestamp,
-      coords: {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      }
-    };
     if (currentRun && currentRun.status.msg !== 'stopping') {
-      addPoint(lastPoint);
+      api.addPoint({
+        timestamp: position.timestamp,
+        coords: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }
+      });
     }
   }
-
-  function addPoint(point) { 
+  
+  api.addPoint = function(point) { 
     if (currentRun.status.msg === 'starting') { 
       setRunStatus({msg: 'recording'});
     }
     if (currentRun.status.msg !== 'recording') { 
       return;
     }
-    currentRun.data.points.push(lastPoint);
+    currentRun.data.points.push(point);
     db.put(currentRun.data, function(err, ret) {
-      api.trigger('recordedPoint', point);
       if (!err) {
         currentRun.data._rev = ret.rev;
       }
@@ -117,30 +73,9 @@ var Trakkr = function(callback) {
       }
     };
     setRunStatus({msg: 'starting'});
-    
-    if (RUN_TEST) { 
-      testInterval = setInterval(function() { 
-        if (!testRun.length) { 
-          clearInterval(testInterval);
-          return;
-        }
-        var point = testRun.shift();
-        lastPoint = { 
-          timestamp: new Date(point.time).getTime(),
-          coords: { 
-            latitude: point.lat,
-            longitude: point.lon
-          }
-        };
-        addPoint(lastPoint);
-      }, 2000);
-    }
   };
   
   api.stop = function(callback) {
-    if (testInterval) { 
-      clearInterval(testInterval);
-    }
     setRunStatus({msg: 'ending'});
     currentRun.active = false;
     currentRun.data.ended = Date.now();
@@ -164,20 +99,17 @@ var Trakkr = function(callback) {
     api.trigger('runs.update');
   };
 
-  Pouch(DB_NAME, function(err, pouch) {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    db = pouch;
-    callback(null, api);
-  });
+  return api;
 };
 
 var TrakkrUI = (function() {
 
   var api = {};
-  var trakkr;
+
+  var trakkr = new Trakkr(function(err) {
+    init();
+  });
+  
   var dom = {};
   var map;
   var mapLayer;
@@ -186,13 +118,15 @@ var TrakkrUI = (function() {
   var timeInterval;
 
   var ids = ['start', 'stop', 'runs', 'run', 'timer', 'delete-run',
-             'run-distance', 'run-pace', 'run-time',
-             'page-home', 'page-runs', 'page-run', 'page-activity', 'gps'];
+             'run-distance', 'run-pace', 'run-time', 'gps'];
+  ids.forEach(function(name) {
+    dom[toCamelCase(name)] = document.getElementById(name);
+  });
 
   var currentPage;
   var currentRun;
 
-  function init() {  
+  function init() {
     trakkr.on('runs.update', refreshRuns);
     trakkr.on('gps.update', gpsUpdated);
     trakkr.on('activity.update', activityUpdated);
@@ -201,7 +135,6 @@ var TrakkrUI = (function() {
     dom.stop.addEventListener('click', api.stopPressed);
     dom.start.removeAttribute('disabled');
     refreshRuns();
-    urlChanged();
 
     map = L.map('map');
     L.tileLayer('http://{s}.tile.cloudmade.com/e3753638d14547d2869865caec6e7c27/997/256/{z}/{x}/{y}.png', {
@@ -213,13 +146,13 @@ var TrakkrUI = (function() {
   api.deletePressed = function() { 
     trakkr.deleteRun(currentRun);
     currentRun = null;
-    visit('View Run', '/runs/');
+    api.navigate('/activities/');
   };
 
   api.startPressed = function() {
     dom.start.setAttribute('disabled', true);
     trakkr.start({type: 'run'});
-    visit('Start Activity', '/activity/');
+    api.navigate('/record-activity/');
   };
 
   api.stopPressed = function() {
@@ -228,26 +161,48 @@ var TrakkrUI = (function() {
     timeInterval = null;
   };
                 
+  var testInterval;
+  var TEST_RUN = true;
+
   function runEnded(id) { 
+    if (testInterval) { 
+      clearInterval(testInterval);
+    }
     dom.timer.textContent = '00:00:00';
     dom.start.removeAttribute('disabled');
-    visit('View Run', '/run/' + id);
+    api.navigate('/activity/' + id);
   };
 
-  function visit(name, url) {
-    history.pushState({}, name, url);
-    urlChanged();
+  function startingRun() {
+    if (!TEST_RUN) return;
+    testInterval = setInterval(function() { 
+      if (!testRun.length) { 
+        clearInterval(testInterval);
+        return;
+      }
+      var point = testRun.shift();
+      trakkr.addPoint({ 
+        timestamp: new Date(point.time).getTime(),
+        coords: { 
+          latitude: point.lat,
+          longitude: point.lon
+        }
+      });
+    }, 2000);
   }
 
   function activityUpdated(status) { 
     console.log('Activity Update:', status);
-    switch (status.msg) { 
-    case 'recording': 
-      startRecording();
-      break;
-    case 'ended': 
-      runEnded(status.id);
-      break;
+    switch (status.msg) {
+      case 'starting': 
+        startingRun();      
+        break;
+      case 'recording': 
+        startRecording();
+        break;
+      case 'ended': 
+        runEnded(status.id);
+        break;
     }
   }
 
@@ -276,37 +231,12 @@ var TrakkrUI = (function() {
     mapLayer = L.layerGroup(markers).addTo(map);  
     map.fitBounds(runStats.bounds);
     var miles = runStats.distance * 0.62137;
-    dom.runDistance.innerHTML = miles.toFixed(2) + 'm';
     var duration = Math.round((runObj.ended - runObj.started) / 1000);
+    dom.runDistance.innerHTML = miles.toFixed(2) + 'm';
     dom.runTime.innerHTML = formatDuration(duration) + 'min';
     dom.runPace.innerHTML = (miles / duration).toFixed(2) + 'min/mi'
   }
  
-  function urlChanged() {
-    var path = document.location.pathname;
-    if (currentPage) {
-      currentPage.style.display = 'none';
-      currentPage = null;
-    }
-    if (path === '/') {
-      currentPage = dom.pageHome;
-    } else if (path === '/runs/') {
-      currentPage = dom.pageRuns;
-    } else if (path === '/activity/') { 
-      currentPage = dom.pageActivity;
-    } else {
-      var run = document.location.pathname.split('/').pop();
-      if (/^trakkr/.test(run)) {
-        trakkr.getRun(run, function(err, runObj) {          
-          currentRun = runObj;
-          drawRun(runObj);
-        });
-      }
-      currentPage = dom.pageRun;
-    }
-    currentPage.style.display = 'block';
-  }
-
   function refreshRuns() {
     trakkr.getRuns(function(err, runs) {
       var ul = document.createElement('ul');
@@ -325,8 +255,7 @@ var TrakkrUI = (function() {
         a.innerHTML = '<strong>' + dateFormat(date, 'mmm dd yyyy, HH:MM') +
           '</strong><br />' + formatDuration(duration);
         a.addEventListener('click', function() {
-          history.pushState({}, 'View Run', '/run/' + row.id);
-          urlChanged();
+          api.navigate('/activity/' + row.id);
         });
         li.appendChild(a);
         ul.appendChild(li);
@@ -336,44 +265,65 @@ var TrakkrUI = (function() {
     });
   }
 
-  function padLeft(num, length) {
-    var r = String(num);
-    while (r.length < length) {
-      r = '0' + r;
+  // The pushstate api kinda sucks, override internal links 
+  document.addEventListener('click', function(e) { 
+    if (e.target.nodeName !== 'A' || 
+        /^http(s?)/.test(e.target.getAttribute('href'))) { 
+      return;
     }
-    return r;
-  }
-
-  function formatDuration(duration) {
-    var minutes = Math.floor(duration / 60);
-    var seconds = Math.round(duration % 60);
-    if (minutes < 60) {
-      return padLeft(minutes, 2) + ':' + padLeft(seconds, 2);
-    }
-    return '';
-  }
-
-  function toCamelCase(str) {
-    return str.replace(/\-(.)/g, function(str, p1) {
-      return p1.toUpperCase();
-    });
-  }
-
-  ids.forEach(function(name) {
-    dom[toCamelCase(name)] = document.getElementById(name);
+    e.preventDefault();
+    e.stopPropagation();
+    api.navigate(e.target.getAttribute('href'));
   });
 
-  var anchors = document.querySelectorAll('[data-href]');
-  for (var i = 0; i < anchors.length; ++i) {
-    anchors[i].addEventListener('click', function() {
-      history.pushState({}, '', '/' + this.getAttribute('data-href'));
-      urlChanged();
+
+  // This all handles page navigation
+  var pages = {};
+
+  ['home', 'activities', 'record-activity', 'activity'].forEach(function(page) { 
+    pages[page] = {dom: document.getElementById('page-' + page) };
+  });
+
+  pages['activity'].render = function(id) { 
+    trakkr.getRun(id, function(err, runObj) { 
+      drawRun(runObj);
     });
+  };
+  
+  api.navigate = function(url, title) { 
+    console.log('url', url);
+    history.pushState({}, title, url);
+    app.trigger(url);
   }
 
-  new Trakkr(function(err, _trakkr) {
-    trakkr = _trakkr;
-    init();
-  });
+  api.visit = function(page, args) {    
+    if (currentPage) {
+      currentPage.style.display = 'none';
+      currentPage = null;
+    }    
+    currentPage = pages[page].dom;
+    if (pages[page].render) { 
+      pages[page].render.apply(this, args);
+    }
+    currentPage.style.display = 'block';
+  }
+
+  window.onpopstate = function() { 
+    api.navigate(document.location.pathname);
+  }
+
+  return api;
 
 })();
+
+
+// It would be nice to do this binding in a cleaner way, I cant think
+// of one right now though
+var app = new Router({
+  '/': TrakkrUI.visit.bind(this, 'home'),
+  '/record-activity/': TrakkrUI.visit.bind(this, 'record-activity'),
+  '/activity/:id': function(id) { TrakkrUI.visit('activity', [id])},
+  '/activities/': TrakkrUI.visit.bind(this, 'activities')
+});
+
+app.trigger('/');
