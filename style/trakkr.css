@@ -118,18 +118,10 @@ header {
 
 /* Start Activity Page */
 
-#gps #found, #gps.active #not-found { 
-  display: none;
-}
-
-#gps.active #found {
-  display: block;
-}
-
 #start { 
   background: orange;
 }
 
-#start.gpsActive { 
+#start.active { 
   background: green;
 }

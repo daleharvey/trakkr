@@ -2,6 +2,8 @@
 
 "use strict";
 
+var app = {};
+
 var Trakkr = function(callback) {
 
   var DB_NAME = 'trakkr';
@@ -232,11 +234,12 @@ var TrakkrUI = (function() {
     map.fitBounds(runStats.bounds);
     var miles = runStats.distance * 0.62137;
     var duration = Math.round((runObj.ended - runObj.started) / 1000);
+
     dom.runDistance.innerHTML = miles.toFixed(2) + 'm';
     dom.runTime.innerHTML = formatDuration(duration) + 'min';
     dom.runPace.innerHTML = (miles / duration).toFixed(2) + 'min/mi'
   }
- 
+
   function refreshRuns() {
     trakkr.getRuns(function(err, runs) {
       var ul = document.createElement('ul');
@@ -293,7 +296,7 @@ var TrakkrUI = (function() {
   api.navigate = function(url, title) { 
     console.log('url', url);
     history.pushState({}, title, url);
-    app.trigger(url);
+    app.router.trigger(url);
   }
 
   api.visit = function(page, args) {    
@@ -317,13 +320,23 @@ var TrakkrUI = (function() {
 })();
 
 
+app.HomeView = function() { 
+  
+}
+
+
+app.PageView = function() { 
+  
+}
+
+
 // It would be nice to do this binding in a cleaner way, I cant think
 // of one right now though
-var app = new Router({
+app.router = new Router({
   '/': TrakkrUI.visit.bind(this, 'home'),
   '/record-activity/': TrakkrUI.visit.bind(this, 'record-activity'),
   '/activity/:id': function(id) { TrakkrUI.visit('activity', [id])},
   '/activities/': TrakkrUI.visit.bind(this, 'activities')
 });
 
-app.trigger('/');
+app.router.trigger('/');

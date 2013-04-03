@@ -20,46 +20,94 @@
       </navigation>
     </header>
 
+    <script type="text/template" id="tpl-homepage">
+      <button id="start" class="<%= this.location.get('lock') ? 'active' : 'inactive' %>">Start</button>
+      <div id="gps">
+        <% if (this.location.get('lock')) { %>
+          <span id="found">GPS is found</span>
+        <% } else { %>
+          <span id="not-found">Searching for GPS, if you start your run we will
+            start recording when we find it.</span>
+        <% } %>      
+      </div>
+    </script>
+
+    <script type="text/template" id="tpl-activity">
+      <div id="stats">
+        <div class="grp">
+          <h3>Distance</h3>
+          <span><%= distance %></span>
+        </div>
+        <div class="grp">
+          <h3>Time</h3>
+          <span><%= time %></span>
+        </div>
+        <div class="grp">
+          <h3>Pace</h3>
+          <span><%= pace %></span>
+        </div>
+      </div>
+      
+      <div id="map"></div>
+      <pre id="run"></pre><br />
+      <button id="delete-run">Delete Run</button>
+    </script>
+
+    <script type="text/template" id="tpl-activities">
+      <ul><%= rows %></ul>
+    </script>
+
+    <script type="text/template" id="tpl-activity-row">
+      <li>
+        <a href="/activity/<%= _id %>">run</a>
+      </li>
+    </script>
+
+    <script type="text/template" id="tpl-record-activity">
+      <h1 id="timer">00:00:00</h1>
+      <button id="stop">Stop</button>
+    </script>
+
     <div id="content">
 
-      <section class="page" id="page-home">
-        <button id="start">Start</button>
-        <div id="gps">
-          <span id="not-found">Searching for GPS, if you start your run we will 
-            start recording when we find it.</span>
-          <span id="found">GPS is found</span>
-        </div>
-      </section>
+      <!-- <section class="page" id="page-home"> -->
+      <!--   <button id="start">Start</button> -->
+      <!--   <div id="gps"> -->
+      <!--     <span id="not-found">Searching for GPS, if you start your run we will  -->
+      <!--       start recording when we find it.</span> -->
+      <!--     <span id="found">GPS is found</span> -->
+      <!--   </div> -->
+      <!-- </section> -->
 
-      <section class="page" id="page-record-activity">
-        <h1 id="timer">00:00:00</h1>
-        <button id="stop">Stop</button>
-      </section>
+      <!-- <section class="page" id="page-record-activity"> -->
+      <!--   <h1 id="timer">00:00:00</h1> -->
+      <!--   <button id="stop">Stop</button> -->
+      <!-- </section> -->
 
-      <section class="page" id="page-activities">
-        <div id="runs"></div>
-      </section>
+      <!-- <section class="page" id="page-activities"> -->
+      <!--   <div id="runs"></div> -->
+      <!-- </section> -->
 
-      <section class="page" id="page-activity">
-        <div id="stats">
-          <div class="grp">
-            <h3>Distance</h3>
-            <span id="run-distance"></span>
-          </div>
-          <div class="grp">
-            <h3>Time</h3>
-            <span id="run-time"></span>
-          </div>
-          <div class="grp">
-            <h3>Pace</h3>
-            <span id="run-pace"></span>
-          </div>
-        </div>
+      <!-- <section class="page" id="page-activity"> -->
+      <!--   <div id="stats"> -->
+      <!--     <div class="grp"> -->
+      <!--       <h3>Distance</h3> -->
+      <!--       <span id="run-distance"></span> -->
+      <!--     </div> -->
+      <!--     <div class="grp"> -->
+      <!--       <h3>Time</h3> -->
+      <!--       <span id="run-time"></span> -->
+      <!--     </div> -->
+      <!--     <div class="grp"> -->
+      <!--       <h3>Pace</h3> -->
+      <!--       <span id="run-pace"></span> -->
+      <!--     </div> -->
+      <!--   </div> -->
 
-        <div id="map"></div>
-        <pre id="run"></pre><br />
-        <button id="delete-run">Delete Run</button>
-      </section>
+      <!--   <div id="map"></div> -->
+      <!--   <pre id="run"></pre><br /> -->
+      <!--   <button id="delete-run">Delete Run</button> -->
+      <!-- </section> -->
 
     </div>
 
@@ -67,12 +115,17 @@
 
     <script src="https://login.persona.org/include.js"></script>
     <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
+    <script src="js/deps/zepto.min.js"></script>
     <script src="js/deps/underscore-min.js"></script>
-    <script src="js/deps/backbone-min.js"></script>
+    <script src="js/deps/backbone.js"></script>
     <script src="js/deps/pouchdb-nightly.min.js"></script>
     <script src="js/deps/date.format.js"></script>
     <script src="js/router.js"></script>
+    <script src="js/deps/backbone-pouchdb.js"></script>
     <script src="js/trakkr.utils.js"></script>
-    <script src="js/trakkr.js"></script>
+    <script src="js/trakkr.nice.js"></script>
+    <script src="js/trakkr.testing.js"></script>
+    <script src="js/trakkr.setup.js"></script>
+
   </body>
 </html>
