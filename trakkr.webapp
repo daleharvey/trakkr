@@ -1,0 +1,11 @@
+{
+  "name": "Trakkr",
+  "description": "A run tracker",
+  "developer": {
+    "name": "Dale Harvey",
+    "url": "http://arandomurl.com"
+  },
+  "icons": {
+    "128": "/style/img/trakkr.png"
+  }
+}

@@ -1,4 +1,5 @@
-/*globals _:true, Backbone: true */
+/*jshint browser:true */
+/*globals _, Backbone */
 
 "use strict";
 
@@ -62,7 +63,7 @@ var Trakkr = function(callback) {
         currentRun.data._rev = ret.rev;
       }
     });
-  }
+  };
   
   api.start = function(opts) {
     var now = Date.now();
@@ -173,7 +174,7 @@ var TrakkrUI = (function() {
     dom.timer.textContent = '00:00:00';
     dom.start.removeAttribute('disabled');
     api.navigate('/activity/' + id);
-  };
+  }
 
   function startingRun() {
     if (!TEST_RUN) return;
@@ -251,8 +252,8 @@ var TrakkrUI = (function() {
         var a = document.createElement('a');
 
         var date = new Date(row.doc.started);
-        var duration = ('ended' in row.doc)
-          ? Math.round((row.doc.ended - row.doc.started) / 1000) : 0;
+        var duration = ('ended' in row.doc) ? 
+          Math.round((row.doc.ended - row.doc.started) / 1000) : 0;
 
         a.classList.add('run');
         a.innerHTML = '<strong>' + dateFormat(date, 'mmm dd yyyy, HH:MM') +
@@ -287,17 +288,16 @@ var TrakkrUI = (function() {
     pages[page] = {dom: document.getElementById('page-' + page) };
   });
 
-  pages['activity'].render = function(id) { 
+  pages.activity.render = function(id) { 
     trakkr.getRun(id, function(err, runObj) { 
       drawRun(runObj);
     });
   };
   
   api.navigate = function(url, title) { 
-    console.log('url', url);
     history.pushState({}, title, url);
     app.router.trigger(url);
-  }
+  };
 
   api.visit = function(page, args) {    
     if (currentPage) {
@@ -309,11 +309,11 @@ var TrakkrUI = (function() {
       pages[page].render.apply(this, args);
     }
     currentPage.style.display = 'block';
-  }
+  };
 
   window.onpopstate = function() { 
     api.navigate(document.location.pathname);
-  }
+  };
 
   return api;
 
@@ -322,12 +322,12 @@ var TrakkrUI = (function() {
 
 app.HomeView = function() { 
   
-}
+};
 
 
 app.PageView = function() { 
   
-}
+};
 
 
 // It would be nice to do this binding in a cleaner way, I cant think
@@ -340,3 +340,22 @@ app.router = new Router({
 });
 
 app.router.trigger('/');
+
+
+// The first time someone visits this game in a device that supports
+// installation, ask if they want to install it.
+if (navigator.mozApps && !localStorage.getItem('checkedInstall')) {
+  localStorage.setItem('checkedInstall', 'true');
+
+  var request = navigator.mozApps.getSelf();
+  request.onsuccess = function() {
+    if (!this.result) {
+      var install = confirm('Do you want to install Trackkr?');
+      if (install) {
+        var manifestUrl = location.protocol + "//" + location.host + 
+          location.pathname + "manifest.webapp";
+        navigator.mozApps.install(manifestUrl);
+      }
+    }
+  };
+}
