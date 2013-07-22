@@ -311,3 +311,21 @@ app.PageWrapper = (function() {
   return api;
 
 });
+
+// The first time someone visits this game in a device that supports
+// installation, ask if they want to install it.
+if (navigator.mozApps && !localStorage.getItem('checkedInstall')) {
+  localStorage.setItem('checkedInstall', 'true');
+
+  var request = navigator.mozApps.getSelf();
+  request.onsuccess = function() {
+    if (!this.result) {
+      var install = confirm('Do you want to install Trakkr?');
+      if (install) {
+        var manifestUrl = location.protocol + "//" + location.host + 
+          location.pathname + "manifest.webapp";
+        navigator.mozApps.install(manifestUrl);
+      }
+    }
+  };
+}
